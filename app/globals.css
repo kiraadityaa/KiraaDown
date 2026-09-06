@@ -195,4 +195,8 @@ body {
   .splash-leave {
     transition: none;
   }
+  .menu-panel,
+  .menu-panel a {
+    transition: none;
+  }
 }
