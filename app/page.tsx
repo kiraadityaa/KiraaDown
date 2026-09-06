@@ -49,9 +49,9 @@ export default function Home() {
   const [result, setResult] = useState<ResolveData | null>(null);
   const [warning, setWarning] = useState("");
   const [error, setError] = useState("");
-  const [history, setHistory] = useState<HistoryItem[]>(() =>
-    typeof window === "undefined" ? [] : loadHistory(),
-  );
+  // Riwayat hanya dibaca setelah mount agar HTML server dan klien identik.
+  // Membaca localStorage saat render awal menyebabkan hydration mismatch (React error #418).
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [busyKey, setBusyKey] = useState<string>("");
   const [zipBusy, setZipBusy] = useState(false);
   const autoDone = useRef(false);
@@ -215,6 +215,8 @@ export default function Home() {
 
   // Status API live untuk badge header.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage hanya ada di browser; dibaca sekali setelah mount agar tidak hydration mismatch.
+    setHistory(loadHistory());
     let alive = true;
     fetch("/api/health", { cache: "no-store" })
       .then((r) => {
