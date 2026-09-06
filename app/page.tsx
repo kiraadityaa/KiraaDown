@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown,
   ArrowClockwise,
@@ -18,6 +18,9 @@ import {
   Link as LinkIcon,
   List,
   X,
+  MagnifyingGlass,
+  PushPin,
+  Lightning,
   GithubLogo,
   TiktokLogo,
   WhatsappLogo,
@@ -29,9 +32,12 @@ import {
   formatCount,
   formatDuration,
   loadHistory,
+  loadResolveCache,
   proxyUrl,
   removeHistoryItem,
   saveHistoryItem,
+  saveResolveCache,
+  togglePinItem,
   type HistoryItem,
   type ResolveData,
 } from "@/lib/client";
@@ -57,6 +63,7 @@ export default function Home() {
   // Riwayat hanya dibaca setelah mount agar HTML server dan klien identik.
   // Membaca localStorage saat render awal menyebabkan hydration mismatch (React error #418).
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [query, setQuery] = useState("");
   const [busyKey, setBusyKey] = useState<string>("");
   const [zipBusy, setZipBusy] = useState(false);
   const autoDone = useRef(false);
@@ -64,6 +71,7 @@ export default function Home() {
   const [vidRes, setVidRes] = useState("");
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const lastResolveRef = useRef(0);
 
   // Paste otomatis dari clipboard saat pertama dibuka.
   useEffect(() => {
@@ -95,6 +103,42 @@ export default function Home() {
         setStatus("error");
         return;
       }
+      // Cache-first: hemat quota TikWM 1 req/detik, 0 req bila hit.
+      const cached = loadResolveCache(value);
+      const cachedHasMedia =
+        !!cached &&
+        (Boolean(cached.video?.noWatermark || cached.video?.watermark || cached.video?.hd) ||
+          (Array.isArray(cached.images) && cached.images.length > 0) ||
+          Boolean(cached.audio));
+      const cachedHdOk = !hd || Boolean(cached?.video?.hd) || cached?.source !== "tikwm";
+      if (cached && cachedHasMedia && cachedHdOk && cached.source !== "oembed") {
+        setResult(cached);
+        setWarning("");
+        setNotice("Dimuat dari cache sesi — tanpa memanggil TikWM.");
+        setStatus("success");
+        setPlaying(false);
+        setVidRes("");
+        const item: HistoryItem = {
+          key: `${cached.id}-${Date.now()}`,
+          url: value,
+          id: cached.id,
+          type: cached.type,
+          title: cached.title,
+          author: cached.author,
+          username: cached.username,
+          cover: cached.cover,
+          time: Date.now(),
+        };
+        setHistory(saveHistoryItem(item));
+        return;
+      }
+      // Throttle klien 1,1 dtk agar klik spam tidak membanjiri upstream.
+      const now = Date.now();
+      if (now - lastResolveRef.current < 1100) {
+        setNotice("Tunggu sebentar (~1 detik) agar tidak melebihi limit TikWM 1 req/detik.");
+        return;
+      }
+      lastResolveRef.current = now;
       abortRef.current?.abort();
       const ctrl = new AbortController();
       abortRef.current = ctrl;
@@ -116,12 +160,18 @@ export default function Home() {
           data?: ResolveData;
           warning?: string;
           error?: string;
+          retryAfterSec?: number;
         };
-        if (!res.ok) throw new Error(json.error || `Gagal (${res.status})`);
+        if (!res.ok) {
+          const wait = json.retryAfterSec ? ` Coba lagi dalam ${json.retryAfterSec} dtk.` : "";
+          throw new Error((json.error || `Gagal (${res.status})`) + wait);
+        }
         if (!json.data) throw new Error("Respons kosong dari server.");
         setResult(json.data);
         setWarning(json.warning || "");
         setStatus("success");
+        // Simpan ke cache sesi agar unduh ulang tidak memanggil TikWM lagi.
+        saveResolveCache(value, json.data);
         const item: HistoryItem = {
           key: `${json.data.id}-${Date.now()}`,
           url: value,
@@ -142,6 +192,43 @@ export default function Home() {
     },
     [url, hd],
   );
+
+  // Buka dari riwayat: coba cache by url+id dulu (0 req), fallback resolve().
+  const openFromHistory = useCallback(
+    (h: HistoryItem) => {
+      if (status === "loading") return;
+      const cached = loadResolveCache(h.url, h.id);
+      const hasMedia =
+        !!cached &&
+        (Boolean(cached.video?.noWatermark || cached.video?.watermark || cached.video?.hd) ||
+          (Array.isArray(cached.images) && cached.images.length > 0) ||
+          Boolean(cached.audio));
+      if (cached && hasMedia && cached.source !== "oembed") {
+        setUrl(h.url);
+        setResult(cached);
+        setWarning("");
+        setNotice("Dimuat dari cache sesi — tanpa memanggil TikWM.");
+        setStatus("success");
+        setError("");
+        setPlaying(false);
+        setVidRes("");
+        document.getElementById("hasil")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      setUrl(h.url);
+      void resolve(h.url);
+    },
+    [resolve, status],
+  );
+
+  // Filter riwayat lokal (0 req): cari di title/author/username/url.
+  const filteredHistory = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return history;
+    return history.filter((h) =>
+      `${h.title} ${h.author} ${h.username} ${h.url}`.toLowerCase().includes(q),
+    );
+  }, [history, query]);
 
   const pasteFromClipboard = useCallback(async () => {
     try {
@@ -227,6 +314,57 @@ export default function Home() {
       setZipBusy(false);
     }
   }, [result]);
+
+  // Unduh langsung dari cache sesi (0 req TikWM). Fallback buka ulang bila miss.
+  const downloadFromHistory = useCallback(
+    (h: HistoryItem) => {
+      const cached = loadResolveCache(h.url, h.id);
+      const videoUrl =
+        cached?.video?.noWatermark || cached?.video?.watermark || cached?.video?.hd || "";
+      const audioUrl = cached?.audio || "";
+      const images = Array.isArray(cached?.images) ? cached.images : [];
+      if (!cached || cached.source === "oembed" || (!videoUrl && !audioUrl && images.length === 0)) {
+        setNotice("Cache sesi kedaluwarsa — membuka ulang tanpa hemat quota.");
+        openFromHistory(h);
+        return;
+      }
+      if (cached.type === "images" && images.length > 1) {
+        // Slideshow: tampilkan dari cache agar tombol ZIP bisa dipakai, tanpa re-resolve.
+        setUrl(h.url);
+        setResult(cached);
+        setWarning("");
+        setNotice(`${images.length} foto dimuat dari cache — gunakan tombol ZIP untuk unduh semua.`);
+        setStatus("success");
+        setError("");
+        document.getElementById("hasil")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      if (videoUrl) {
+        void downloadFile(
+          videoUrl,
+          baseFilename("kiraadown-nowm", cached.id, "mp4"),
+          `hist-${h.key}`,
+        );
+        return;
+      }
+      if (images.length === 1 && images[0]) {
+        void downloadFile(
+          images[0],
+          baseFilename("kiraadown-foto", `${cached.id}-1`, "jpg"),
+          `hist-${h.key}`,
+        );
+        return;
+      }
+      if (audioUrl) {
+        void downloadFile(
+          audioUrl,
+          baseFilename("kiraadown-audio", cached.id, "mp3"),
+          `hist-${h.key}`,
+        );
+      }
+    },
+    [downloadFile, openFromHistory],
+  );
 
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
@@ -502,6 +640,11 @@ export default function Home() {
                 />
                 <label htmlFor="hd-toggle">Minta kualitas HD bila tersedia</label>
               </div>
+              {notice && !result && (
+                <p className="mt-3 text-xs leading-relaxed rounded-xl bg-lime-500/10 border border-lime-600/30 p-3">
+                  {notice}
+                </p>
+              )}
             </form>
 
             {/* Status */}
@@ -841,6 +984,7 @@ export default function Home() {
                   onClick={() => {
                     clearHistory();
                     setHistory([]);
+                    setQuery("");
                   }}
                   className="btn-pill shrink-0 px-3.5 py-1.5 text-xs font-semibold border border-black/15 dark:border-white/20 inline-flex items-center gap-1.5"
                 >
@@ -851,15 +995,59 @@ export default function Home() {
             <p className="text-sm opacity-60 mt-1">
               Tersimpan di localStorage browser. Maksimal {30} entri. Tanpa database, tanpa akun.
             </p>
+            {history.length > 0 && (
+              <div className="relative mt-4">
+                <MagnifyingGlass
+                  size={16}
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-40 pointer-events-none"
+                />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Cari judul, kreator, atau link..."
+                  aria-label="Cari riwayat"
+                  className="field-input w-full pl-10 pr-9 py-2.5 text-sm bg-white dark:bg-[#141714] border border-black/15 dark:border-white/15"
+                />
+                {query && (
+                  <button
+                    aria-label="Bersihkan pencarian"
+                    onClick={() => setQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-black/5 dark:hover:bg-white/10"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            )}
             {history.length === 0 ? (
               <div className="dark-card mt-4 p-6 text-sm opacity-70">
                 Belum ada riwayat. Setiap unduhan sukses tercatat di sini dan bisa dibuka ulang
                 dengan satu klik.
               </div>
+            ) : filteredHistory.length === 0 ? (
+              <div className="dark-card mt-4 p-6 text-sm opacity-70">
+                Tidak ditemukan untuk &ldquo;{query.trim()}&rdquo;. Coba kata kunci lain atau{" "}
+                <button onClick={() => setQuery("")} className="underline font-semibold">
+                  tampilkan semua
+                </button>
+                .
+              </div>
             ) : (
+              <>
+                {query.trim() && (
+                  <p className="mt-3 text-xs opacity-60">
+                    Menampilkan {filteredHistory.length} dari {history.length} entri.
+                  </p>
+                )}
               <ul className="mt-4 grid gap-2">
-                {history.map((h) => (
-                  <li key={h.key} className="dark-card min-w-0 overflow-hidden p-3 flex gap-3 items-center">
+                {filteredHistory.map((h) => (
+                  <li
+                    key={h.key}
+                    className={`dark-card min-w-0 overflow-hidden p-3 flex gap-3 items-center ${
+                      h.pinned ? "ring-1 ring-lime-500/60" : ""
+                    }`}
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={h.cover || "/favicon.ico"}
@@ -868,17 +1056,40 @@ export default function Home() {
                       loading="lazy"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold truncate">{h.title}</p>
+                      <p className="text-sm font-semibold truncate">
+                        {h.pinned && <span className="mr-1">📌</span>}
+                        {h.title}
+                      </p>
                       <p className="text-xs opacity-60 truncate">
                         {h.author} : {new Date(h.time).toLocaleString("id-ID")}
                       </p>
                     </div>
                     <button
-                      onClick={() => {
-                        setUrl(h.url);
-                        void resolve(h.url);
-                      }}
-                      className="btn-pill px-3.5 py-1.5 text-xs font-bold bg-neutral-900 text-white dark:bg-lime-400 dark:text-lime-950 shrink-0"
+                      aria-label={h.pinned ? "Lepas pin" : "Pin ke atas"}
+                      aria-pressed={!!h.pinned}
+                      title={h.pinned ? "Lepas pin" : "Pin ke atas"}
+                      onClick={() => setHistory(togglePinItem(h.key))}
+                      className={`p-2 rounded-full shrink-0 ${
+                        h.pinned
+                          ? "bg-lime-500/20 text-lime-700 dark:text-lime-300"
+                          : "hover:bg-black/5 dark:hover:bg-white/10 opacity-60"
+                      }`}
+                    >
+                      <PushPin size={15} weight={h.pinned ? "fill" : "regular"} />
+                    </button>
+                    <button
+                      aria-label="Unduh langsung dari cache"
+                      title="Unduh langsung dari cache sesi (tanpa re-resolve)"
+                      onClick={() => downloadFromHistory(h)}
+                      className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 shrink-0"
+                    >
+                      <Lightning size={15} />
+                    </button>
+                    <button
+                      onClick={() => openFromHistory(h)}
+                      disabled={status === "loading"}
+                      title="Buka dari cache sesi bila tersedia (hemat quota)"
+                      className="btn-pill px-3.5 py-1.5 text-xs font-bold bg-neutral-900 text-white dark:bg-lime-400 dark:text-lime-950 shrink-0 disabled:opacity-60"
                     >
                       Buka
                     </button>
@@ -892,6 +1103,7 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
+              </>
             )}
           </div>
 
