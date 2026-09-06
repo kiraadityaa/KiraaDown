@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import ThemeToggle from "../components/ThemeToggle";
 
 export const metadata: Metadata = {
   title: "Perkembangan KiraaDown - Changelog",
@@ -15,6 +16,16 @@ interface Release {
 }
 
 const RELEASES: Release[] = [
+  {
+    version: "v1.6.0",
+    date: "6 Sep 2026",
+    title: "Toggle tema manual",
+    items: [
+      "Tombol tema terang dan gelap di header, dengan tema gelap sebagai default aplikasi.",
+      "Pilihan tersimpan di browser dan diterapkan sebelum paint agar tidak berkedip.",
+      "Ikon matahari dan bulan bertransisi crossfade mengikuti gaya menu mobile.",
+    ],
+  },
   {
     version: "v1.5.0",
     date: "6 Sep 2026",
@@ -114,7 +125,6 @@ const RELEASES: Release[] = [
 
 const ROADMAP = [
   "Provider cadangan tambahan agar ketahanan resolve makin tinggi.",
-  "Toggle tema terang dan gelap manual di header.",
   "Ekspor dan impor riwayat sebagai file JSON.",
   "Dukungan PWA agar bisa dipasang ke layar utama HP.",
 ];
@@ -136,6 +146,9 @@ export default function Perkembangan() {
           >
             Beranda
           </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

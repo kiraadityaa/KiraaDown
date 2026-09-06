@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Mode gelap dikontrol class .dark di <html> (toggle manual), bukan media query. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
@@ -15,7 +18,10 @@
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
 }
 
 /* Sembunyikan scrollbar visual tanpa mematikan scroll.
@@ -58,11 +64,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background: #0d0f0c;
-    color: #eef2e4;
-  }
+.dark body {
+  background: #0d0f0c;
+  color: #eef2e4;
 }
 
 .dark-card {
@@ -71,11 +75,9 @@ body {
   border-radius: 16px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .dark-card {
-    background: #141714;
-    border-color: #262b24;
-  }
+.dark .dark-card {
+  background: #141714;
+  border-color: #262b24;
 }
 
 .field-input {

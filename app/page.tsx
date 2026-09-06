@@ -35,6 +35,7 @@ import {
   type HistoryItem,
   type ResolveData,
 } from "@/lib/client";
+import ThemeToggle from "./components/ThemeToggle";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -350,10 +351,12 @@ export default function Home() {
             >
               <DownloadSimple size={15} weight="bold" /> Mulai
             </button>
+            <ThemeToggle className="ml-1 w-9 h-9" />
           </nav>
 
           {/* Aksi mobile */}
           <div className="flex md:hidden items-center gap-2">
+            <ThemeToggle />
             <button
               type="button"
               onClick={focusInput}

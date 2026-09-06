@@ -49,10 +49,17 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+// Skrip blokir sebelum paint: terapkan tema tersimpan, default gelap.
+// Harus identik logikanya dengan app/components/ThemeToggle.tsx.
+const themeScript = `(function(){try{var t=localStorage.getItem("kiraadown-theme");document.documentElement.classList.toggle("dark",t?t==="dark":true);}catch(e){document.documentElement.classList.add("dark");}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+    <html lang="id" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <body className="min-h-full">
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {children}
+      </body>
     </html>
   );
 }
