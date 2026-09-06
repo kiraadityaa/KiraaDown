@@ -16,6 +16,8 @@ import {
   Pause,
   Clock,
   Link as LinkIcon,
+  List,
+  X,
 } from "@phosphor-icons/react";
 import {
   baseFilename,
@@ -201,6 +203,46 @@ export default function Home() {
   }, []);
 
   const [splashDone, setSplashDone] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [apiOk, setApiOk] = useState<boolean | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Status API live untuk badge header.
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/health", { cache: "no-store" })
+      .then((r) => {
+        if (alive) setApiOk(r.ok);
+      })
+      .catch(() => {
+        if (alive) setApiOk(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Bayangan header hanya setelah konten tergulir (tanpa scroll listener).
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setScrolled(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const focusInput = useCallback(() => {
+    setMenuOpen(false);
+    const el = inputRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => el.focus({ preventScroll: true }), 400);
+  }, []);
 
   const noWm = result?.video.noWatermark || "";
   const wm = result?.video.watermark || "";
@@ -211,36 +253,108 @@ export default function Home() {
   return (
     <div className="min-h-[100dvh] flex flex-col">
       {!splashDone && <Splash onDone={() => setSplashDone(true)} />}
-      {/* Navigasi satu baris */}
-      <header className="border-b border-black/10 dark:border-white/10">
+      <div ref={sentinelRef} aria-hidden="true" className="h-px w-full" />
+      <header
+        className={`sticky top-0 z-50 backdrop-blur-md transition-colors ${
+          scrolled
+            ? "bg-[#f2f0e8]/90 dark:bg-[#0d0f0c]/90 border-b border-black/10 dark:border-white/10"
+            : "bg-transparent border-b border-transparent"
+        }`}
+      >
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-[10px] bg-lime-500 grid place-items-center font-mono font-bold text-lime-950">
+          <a href="#unduh" className="flex items-center gap-2.5 min-w-0" aria-label="KiraaDown ke atas">
+            <span className="w-9 h-9 rounded-[12px] bg-lime-500 grid place-items-center font-mono font-bold text-lg text-lime-950 shrink-0 -rotate-3">
               K
             </span>
-            <div className="leading-tight">
-              <p className="font-bold tracking-tight">KiraaDown</p>
-              <p className="text-[11px] opacity-60 font-mono">Rp0. Tanpa daftar.</p>
-            </div>
-          </div>
-          <nav className="flex items-center gap-1 text-sm">
-            <a href="#unduh" className="px-3 py-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10">
-              Unduh
-            </a>
-            <a href="#riwayat" className="px-3 py-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 hidden sm:inline">
-              Riwayat
-            </a>
-            <a href="#batas" className="px-3 py-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 hidden sm:inline">
-              Batas gratis
-            </a>
-            <a
-              href="#faq"
-              className="btn-pill px-4 py-2 bg-neutral-900 text-white dark:bg-lime-400 dark:text-lime-950 font-semibold"
+            <span className="leading-tight min-w-0">
+              <span className="block font-bold tracking-tight">KiraaDown</span>
+              <span className="hidden sm:flex items-center gap-1.5 font-mono text-[11px] opacity-70">
+                <span
+                  className={`inline-block w-1.5 h-1.5 rounded-full ${
+                    apiOk === null
+                      ? "bg-neutral-400 animate-pulse"
+                      : apiOk
+                        ? "bg-lime-500"
+                        : "bg-amber-500"
+                  }`}
+                />
+                {apiOk === null ? "Menghubungi API" : apiOk ? "API aktif . Rp0" : "API lambat"}
+              </span>
+            </span>
+          </a>
+
+          {/* Nav desktop: pil tersegmentasi satu baris */}
+          <nav
+            aria-label="Navigasi utama"
+            className="hidden md:flex items-center gap-1 text-sm rounded-full border border-black/10 dark:border-white/15 bg-white/60 dark:bg-white/5 p-1"
+          >
+            {[
+              ["#unduh", "Unduh"],
+              ["#riwayat", "Riwayat"],
+              ["#batas", "Batas gratis"],
+              ["#faq", "FAQ"],
+            ].map(([href, label]) => (
+              <a
+                key={href}
+                href={href}
+                className="px-3.5 py-1.5 rounded-full font-medium opacity-75 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition"
+              >
+                {label}
+              </a>
+            ))}
+            <button
+              type="button"
+              onClick={focusInput}
+              className="btn-pill ml-1 px-4 py-1.5 bg-lime-500 hover:bg-lime-400 text-lime-950 font-bold inline-flex items-center gap-1.5"
             >
-              FAQ
-            </a>
+              <DownloadSimple size={15} weight="bold" /> Mulai
+            </button>
           </nav>
+
+          {/* Aksi mobile */}
+          <div className="flex md:hidden items-center gap-2">
+            <button
+              type="button"
+              onClick={focusInput}
+              className="btn-pill px-4 py-2 bg-lime-500 text-lime-950 text-sm font-bold inline-flex items-center gap-1.5"
+            >
+              <DownloadSimple size={15} weight="bold" /> Mulai
+            </button>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-expanded={menuOpen}
+              aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
+              className="w-10 h-10 grid place-items-center rounded-full border border-black/15 dark:border-white/20"
+            >
+              {menuOpen ? <X size={19} /> : <List size={19} />}
+            </button>
+          </div>
         </div>
+
+        {/* Panel menu mobile */}
+        {menuOpen && (
+          <nav
+            aria-label="Navigasi seluler"
+            className="md:hidden border-t border-black/10 dark:border-white/10 bg-[#f2f0e8] dark:bg-[#0d0f0c] px-4 py-3 grid gap-1 text-[15px] font-medium"
+          >
+            {[
+              ["#unduh", "Unduh"],
+              ["#riwayat", "Riwayat"],
+              ["#batas", "Batas gratis"],
+              ["#faq", "FAQ"],
+            ].map(([href, label]) => (
+              <a
+                key={href}
+                href={href}
+                onClick={() => setMenuOpen(false)}
+                className="px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+        )}
       </header>
 
       <main className="flex-1">
@@ -273,6 +387,7 @@ export default function Home() {
                   <LinkIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-40" size={18} />
                   <input
                     id="tiktok-url"
+                    ref={inputRef}
                     type="url"
                     inputMode="url"
                     autoComplete="off"
@@ -617,7 +732,7 @@ export default function Home() {
                 kamu tidak perlu menebak.
               </p>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-2 snap-x">
+            <div className="no-scrollbar flex gap-2 overflow-x-auto pb-2 snap-x">
               {[
                 { t: "MP4 tanpa watermark", d: "Bersih, siap repost dengan izin." },
                 { t: "MP4 watermark", d: "Cadangan bila versi bersih gagal." },

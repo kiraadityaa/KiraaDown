@@ -18,6 +18,30 @@
   color-scheme: light dark;
 }
 
+/* Sembunyikan scrollbar visual tanpa mematikan scroll.
+   Scroll tetap bekerja via mouse, sentuh, dan keyboard. */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Shape rule: buttons full-pill, cards 16px, inputs 12px. Documented once. */
 
 body {
