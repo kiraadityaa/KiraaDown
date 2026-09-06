@@ -1,0 +1,167 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --color-ink: #101210;
+  --color-ink-soft: #1b1e1a;
+  --color-paper: #f2f0e8;
+  --color-card: #ffffff;
+  --color-line: #e2ded2;
+  --color-accent: #65a30d;
+  --color-accent-bright: #a3e635;
+  --color-accent-ink: #1a2e05;
+}
+
+:root {
+  color-scheme: light dark;
+}
+
+/* Shape rule: buttons full-pill, cards 16px, inputs 12px. Documented once. */
+
+body {
+  font-family: var(--font-sans);
+  background: #f2f0e8;
+  color: #101210;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #0d0f0c;
+    color: #eef2e4;
+  }
+}
+
+.dark-card {
+  background: #ffffff;
+  border: 1px solid #e2ded2;
+  border-radius: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dark-card {
+    background: #141714;
+    border-color: #262b24;
+  }
+}
+
+.field-input {
+  border-radius: 12px;
+}
+
+.btn-pill {
+  border-radius: 999px;
+}
+
+.btn-pill:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(127, 127, 127, 0.18);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: shimmer 1.2s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.tick {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #65a30d;
+  display: inline-block;
+}
+
+:focus-visible {
+  outline: 2px solid #65a30d;
+  outline-offset: 2px;
+}
+
+/* Splash saat aplikasi dibuka. Hanya transform dan opacity. */
+.splash-pop {
+  animation: splash-pop 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes splash-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.splash-rise {
+  animation: splash-rise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.splash-rise-1 { animation-delay: 0.08s; }
+.splash-rise-2 { animation-delay: 0.16s; }
+@keyframes splash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.splash-bar {
+  transform-origin: left center;
+  animation: splash-fill 1.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes splash-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.splash-leave {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-pop,
+  .splash-rise,
+  .splash-bar {
+    animation: none;
+  }
+  .splash-leave {
+    transition: none;
+  }
+}
