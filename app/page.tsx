@@ -38,6 +38,9 @@ import {
 
 type Status = "idle" | "loading" | "success" | "error";
 
+// Jaga tetap sinkron dengan MAX_BYTES di app/api/proxy/route.ts.
+const MAX_PROXY_BYTES = 120 * 1024 * 1024;
+
 function looksTikTok(v: string): boolean {
   return /tiktok\.com|tiktokv\.com|vt\.tiktok|vm\.tiktok/i.test(v);
 }
@@ -48,6 +51,7 @@ export default function Home() {
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<ResolveData | null>(null);
   const [warning, setWarning] = useState("");
+  const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   // Riwayat hanya dibaca setelah mount agar HTML server dan klien identik.
   // Membaca localStorage saat render awal menyebabkan hydration mismatch (React error #418).
@@ -95,6 +99,7 @@ export default function Home() {
       setStatus("loading");
       setError("");
       setWarning("");
+      setNotice("");
       setResult(null);
       setPlaying(false);
       try {
@@ -146,10 +151,12 @@ export default function Home() {
     }
   }, [result]);
 
+  // Jaga tetap sinkron dengan MAX_BYTES di app/api/proxy/route.ts.
   const downloadFile = useCallback(async (mediaUrl: string, filename: string, key: string) => {
     if (!mediaUrl) return;
     setBusyKey(key);
-    try {
+    setNotice("");
+    const viaProxy = () => {
       const a = document.createElement("a");
       a.href = proxyUrl(mediaUrl, filename);
       a.download = filename;
@@ -157,6 +164,30 @@ export default function Home() {
       document.body.appendChild(a);
       a.click();
       a.remove();
+    };
+    try {
+      // Preflight: file raksasa (misal 4K 120fps di atas 120 MB) tidak bisa
+      // lewat proxy serverless, jadi dibuka langsung dari CDN di tab baru.
+      try {
+        const probe = await fetch(
+          `/api/proxy?url=${encodeURIComponent(mediaUrl)}`,
+          { method: "HEAD" },
+        );
+        if (probe.ok) {
+          const size = Number(probe.headers.get("X-File-Size") ?? 0);
+          const max = Number(probe.headers.get("X-Max-Bytes") ?? String(MAX_PROXY_BYTES));
+          if (size > max) {
+            window.open(mediaUrl, "_blank", "noopener,noreferrer");
+            setNotice(
+              `File besar sekitar ${Math.max(1, Math.round(size / 1048576))} MB melebihi batas proxy ${Math.round(max / 1048576)} MB, jadi dibuka langsung dari CDN di tab baru. Simpan lewat menu titik tiga pada pemutar bila perlu.`,
+            );
+            return;
+          }
+        }
+      } catch {
+        /* preflight gagal, tetap coba via proxy */
+      }
+      viaProxy();
     } finally {
       setTimeout(() => setBusyKey(""), 1200);
     }
@@ -595,6 +626,11 @@ export default function Home() {
                   <CheckCircle size={20} className="text-lime-600" /> Siap diunduh
                 </h2>
                 <p className="text-sm opacity-70 mt-1 line-clamp-3">{result.title}</p>
+                {notice && (
+                  <p className="mt-3 text-xs leading-relaxed rounded-xl bg-lime-500/10 border border-lime-600/30 p-3">
+                    {notice}
+                  </p>
+                )}
 
                 <div className="mt-4 grid gap-2">
                   {!isImages ? (

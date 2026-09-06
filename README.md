@@ -91,6 +91,7 @@ Lapor bug atau usulkan fitur ke kiraadityaa: GitHub [@kiraadityaa](https://githu
 - `Terlalu banyak permintaan`: tunggu sesuai detik di respons `Retry-After`. Limit default 12 resolve per menit per IP.
 - `Konten tidak ditemukan di TikWM`: link privat, dihapus, atau region dibatasi. Coba link publik lain.
 - Tombol unduh 502/504: CDN TikTok lambat. Coba lagi, lalu coba format lain (watermark vs tanpa watermark).
+- Tombol unduh membuka tab baru: file di atas 120 MB (misal 4K 120fps) tidak bisa lewat proxy serverless, jadi dibuka langsung dari CDN. Simpan lewat menu titik tiga pada pemutar video.
 - Clipboard tidak terbaca: browser memblokir izin. Klik Tempel sekali lagi atau gunakan Ctrl+V manual. Perlu HTTPS atau localhost.
 - Build gagal di Windows karena nama package kapital: nama package sudah `kiraadown` lowercase.
 - Video tidak bisa preview: gunakan tombol unduh langsung, file tetap bisa diunduh via proxy.
