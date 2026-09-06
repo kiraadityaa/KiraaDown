@@ -17,6 +17,29 @@ interface Release {
 
 const RELEASES: Release[] = [
   {
+    version: "v1.8.0",
+    date: "6 Sep 2026",
+    title: "Salin info dan backup riwayat",
+    items: [
+      "Tombol Salin info di panel hasil: judul, kreator (@username), dan link disalin 0 req, siap tempel untuk repost.",
+      "Ekspor riwayat ke JSON: backup 30 entri plus status pin, nama file bertanggal otomatis.",
+      "Impor riwayat dari JSON: validasi, dedup by link, pin lama dihormati, pesan jumlah diimpor/dilewati.",
+    ],
+  },
+  {
+    version: "v1.7.0",
+    date: "6 Sep 2026",
+    title: "Riwayat pintar hemat quota",
+    items: [
+      "Search box riwayat: filter lokal 0 req by judul, kreator, username, dan link plus counter hasil.",
+      "Pin favorit: tombol pin per entri, pin tersimpan di localStorage dan selalu di atas.",
+      "Tombol unduh langsung (Lightning): pakai cache ResolveData di sessionStorage tanpa re-resolve; slideshow multi-foto dibuka dari cache agar tombol ZIP tetap bisa dipakai.",
+      "Buka hemat quota: cache-first by url+id, throttle klien 1,1 detik, tombol disabled saat loading, dan pesan retryAfter saat 429.",
+      "Perbaikan build: hapus setCacheTick tak terdefinisi yang menggagalkan TypeScript.",
+      "Header /perkembangan responsif: aksi kanan dikelompokkan, logo anti-meluber di HP.",
+    ],
+  },
+  {
     version: "v1.6.0",
     date: "6 Sep 2026",
     title: "Toggle tema manual",

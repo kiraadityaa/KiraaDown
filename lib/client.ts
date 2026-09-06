@@ -101,6 +101,46 @@ export function removeHistoryItem(key: string): HistoryItem[] {
   return list;
 }
 
+// Ekspor riwayat sebagai JSON (backup 30 entri + pin). 0 req server.
+export function serializeHistory(): string {
+  return JSON.stringify(loadHistory(), null, 2);
+}
+
+// Impor riwayat dari file JSON: validasi, dedup by url, hormati pin lama.
+export function importHistoryItems(raw: unknown): {
+  list: HistoryItem[];
+  added: number;
+  skipped: number;
+} {
+  const prev = loadHistory();
+  const byUrl = new Map(prev.map((h) => [h.url, h]));
+  let added = 0;
+  let skipped = 0;
+  if (!Array.isArray(raw)) return { list: prev, added: 0, skipped: 0 };
+  for (const r of raw as Partial<HistoryItem>[]) {
+    const url = typeof r?.url === "string" ? r.url.trim().slice(0, 2048) : "";
+    if (!url || byUrl.has(url)) {
+      skipped += 1;
+      continue;
+    }
+    const id = typeof r?.id === "string" && r.id ? r.id.slice(0, 64) : `imp-${added}`;
+    byUrl.set(url, {
+      key: typeof r?.key === "string" && r.key ? r.key.slice(0, 96) : `${id}-${Date.now()}-${added}`,
+      url,
+      id,
+      type: typeof r?.type === "string" ? r.type.slice(0, 16) : "video",
+      title: typeof r?.title === "string" ? r.title.slice(0, 500) : "Tanpa judul",
+      author: typeof r?.author === "string" ? r.author.slice(0, 120) : "Kreator TikTok",
+      username: typeof r?.username === "string" ? r.username.slice(0, 80) : "",
+      cover: typeof r?.cover === "string" ? r.cover.slice(0, 2048) : "",
+      time: typeof r?.time === "number" && Number.isFinite(r.time) ? r.time : Date.now(),
+      pinned: !!r?.pinned,
+    });
+    added += 1;
+  }
+  return { list: persistHistory([...byUrl.values()]), added, skipped };
+}
+
 // Cache hasil resolve di sessionStorage agar "unduh ulang" tidak
 // memanggil TikWM lagi selama tab masih terbuka. Hemat quota 1 req/detik.
 // URL CDN TikTok bertanda tangan dan cepat kedaluwarsa, jadi TTL pendek.

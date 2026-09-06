@@ -6,10 +6,12 @@ import {
   ArrowClockwise,
   CheckCircle,
   ClipboardText,
+  CopySimple,
   FilmStrip,
   Image as ImageIcon,
   MusicNote,
   Trash,
+  UploadSimple,
   WarningCircle,
   DownloadSimple,
   Play,
@@ -31,12 +33,14 @@ import {
   clearHistory,
   formatCount,
   formatDuration,
+  importHistoryItems,
   loadHistory,
   loadResolveCache,
   proxyUrl,
   removeHistoryItem,
   saveHistoryItem,
   saveResolveCache,
+  serializeHistory,
   togglePinItem,
   type HistoryItem,
   type ResolveData,
@@ -64,6 +68,9 @@ export default function Home() {
   // Membaca localStorage saat render awal menyebabkan hydration mismatch (React error #418).
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [query, setQuery] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [histMsg, setHistMsg] = useState("");
+  const importRef = useRef<HTMLInputElement | null>(null);
   const [busyKey, setBusyKey] = useState<string>("");
   const [zipBusy, setZipBusy] = useState(false);
   const autoDone = useRef(false);
@@ -365,6 +372,58 @@ export default function Home() {
     },
     [downloadFile, openFromHistory],
   );
+
+  // No.6: salin metadata siap repost (0 req). Format: judul, kreator, link.
+  const copyMetadata = useCallback(async () => {
+    if (!result) return;
+    const handle = result.username ? ` (@${result.username})` : "";
+    const text = `${result.title}\n${result.author}${handle}\n${url || result.cover}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setNotice("Info konten disalin — siap tempel untuk repost.");
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setError("Gagal menyalin otomatis. Blokir izin clipboard? Salin manual dari layar.");
+    }
+  }, [result, url]);
+
+  // No.2: ekspor riwayat sebagai file JSON (backup + pin).
+  const exportHistory = useCallback(() => {
+    const list = loadHistory();
+    if (list.length === 0) {
+      setHistMsg("Riwayat masih kosong — belum ada yang diekspor.");
+      return;
+    }
+    const blob = new Blob([serializeHistory()], { type: "application/json" });
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = href;
+    a.download = `kiraadown-riwayat-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 5000);
+    setHistMsg(`Diekspor ${list.length} entri ke JSON.`);
+  }, []);
+
+  // No.2: impor riwayat dari file JSON (validasi + dedup by url).
+  const importHistoryFile = useCallback(async (file: File) => {
+    try {
+      const text = await file.text();
+      const raw: unknown = JSON.parse(text);
+      const { list, added, skipped } = importHistoryItems(raw);
+      setHistory(list);
+      setHistMsg(
+        added > 0
+          ? `Diimpor ${added} entri${skipped > 0 ? `, ${skipped} dilewati (duplikat/tak valid)` : ""}.`
+          : "Tidak ada entri baru — semua duplikat atau tak valid.",
+      );
+    } catch {
+      setHistMsg("File tak valid. Pilih JSON hasil ekspor KiraaDown.");
+    }
+  }, []);
 
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
@@ -803,6 +862,15 @@ export default function Home() {
                   <CheckCircle size={20} className="text-lime-600" /> Siap diunduh
                 </h2>
                 <p className="text-sm opacity-70 mt-1 line-clamp-3">{result.title}</p>
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={() => void copyMetadata()}
+                    className="btn-pill px-3.5 py-1.5 text-xs font-semibold border border-black/15 dark:border-white/20 inline-flex items-center gap-1.5 hover:bg-black/5 dark:hover:bg-white/10"
+                  >
+                    <CopySimple size={14} /> {copied ? "Disalin!" : "Salin info"}
+                  </button>
+                </div>
                 {notice && (
                   <p className="mt-3 text-xs leading-relaxed rounded-xl bg-lime-500/10 border border-lime-600/30 p-3">
                     {notice}
@@ -979,22 +1047,53 @@ export default function Home() {
           <div className="min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-2xl font-bold tracking-tight">Riwayat perangkat</h2>
-              {history.length > 0 && (
+              <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                 <button
-                  onClick={() => {
-                    clearHistory();
-                    setHistory([]);
-                    setQuery("");
-                  }}
+                  onClick={exportHistory}
+                  disabled={history.length === 0}
+                  title="Unduh riwayat sebagai JSON"
+                  className="btn-pill shrink-0 px-3.5 py-1.5 text-xs font-semibold border border-black/15 dark:border-white/20 inline-flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <DownloadSimple size={14} /> Ekspor
+                </button>
+                <button
+                  onClick={() => importRef.current?.click()}
+                  title="Impor riwayat dari JSON"
                   className="btn-pill shrink-0 px-3.5 py-1.5 text-xs font-semibold border border-black/15 dark:border-white/20 inline-flex items-center gap-1.5"
                 >
-                  <Trash size={14} /> Hapus semua
+                  <UploadSimple size={14} /> Impor
                 </button>
-              )}
+                {history.length > 0 && (
+                  <button
+                    onClick={() => {
+                      clearHistory();
+                      setHistory([]);
+                      setQuery("");
+                      setHistMsg("Riwayat dihapus.");
+                    }}
+                    className="btn-pill shrink-0 px-3.5 py-1.5 text-xs font-semibold border border-black/15 dark:border-white/20 inline-flex items-center gap-1.5"
+                  >
+                    <Trash size={14} /> Hapus semua
+                  </button>
+                )}
+              </div>
             </div>
+            <input
+              ref={importRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              aria-label="Impor riwayat dari file JSON"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = "";
+                if (f) void importHistoryFile(f);
+              }}
+            />
             <p className="text-sm opacity-60 mt-1">
               Tersimpan di localStorage browser. Maksimal {30} entri. Tanpa database, tanpa akun.
             </p>
+            {histMsg && <p className="mt-2 text-xs opacity-70">{histMsg}</p>}
             {history.length > 0 && (
               <div className="relative mt-4">
                 <MagnifyingGlass
