@@ -16,6 +16,15 @@ interface Release {
 
 const RELEASES: Release[] = [
   {
+    version: "v1.5.0",
+    date: "6 Sep 2026",
+    title: "Pratinjau tautan yang keren",
+    items: [
+      "Gambar Open Graph 1200x630 bergaya merek untuk WhatsApp, Telegram, X, dan lainnya.",
+      "Metadata Twitter summary large image, theme color terang dan gelap, plus metadataBase lewat env.",
+    ],
+  },
+  {
     version: "v1.4.0",
     date: "6 Sep 2026",
     title: "Halaman perkembangan",

@@ -86,6 +86,14 @@ lib/
   client.ts           # riwayat localStorage, helper unduhan
 ```
 
+## Pratinjau tautan (Open Graph)
+
+Saat link aplikasi di-share ke WhatsApp, Telegram, atau X, tampil kartu bergambar 1200x630 dari route `/opengraph-image` (dibuat dengan `next/og`, tanpa layanan luar). Agar URL gambar absolut dan valid:
+
+1. Isi env `NEXT_PUBLIC_SITE_URL` di Vercel dengan domain produksi, misal `https://namaproject-xxx.vercel.app`.
+2. Redeploy agar metadata ikut ter-build ulang.
+3. Uji dengan share ke chat pribadi. Catatan: WhatsApp dan Telegram meng-cache preview, jadi URL yang pernah di-share sebelum env diisi bisa tetap tampil polos sampai cache kedaluwarsa atau URL diberi parameter baru.
+
 ## Kontak developer
 
 Lapor bug atau usulkan fitur ke kiraadityaa: GitHub [@kiraadityaa](https://github.com/kiraadityaa), TikTok [@kiraadityaa](https://www.tiktok.com/@kiraadityaa), WhatsApp [+62 815-5336-2795](https://wa.me/6281553362795), Instagram [@aaaditz_](https://instagram.com/aaaditz_).
