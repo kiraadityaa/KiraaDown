@@ -82,6 +82,10 @@ lib/
   client.ts           # riwayat localStorage, helper unduhan
 ```
 
+## Kontak developer
+
+Lapor bug atau usulkan fitur ke kiraadityaa: GitHub [@kiraadityaa](https://github.com/kiraadityaa), TikTok [@kiraadityaa](https://www.tiktok.com/@kiraadityaa), WhatsApp [+62 815-5336-2795](https://wa.me/6281553362795), Instagram [@aaaditz_](https://instagram.com/aaaditz_).
+
 ## Troubleshooting
 
 - `Terlalu banyak permintaan`: tunggu sesuai detik di respons `Retry-After`. Limit default 12 resolve per menit per IP.

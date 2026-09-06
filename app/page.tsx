@@ -18,6 +18,10 @@ import {
   Link as LinkIcon,
   List,
   X,
+  GithubLogo,
+  TiktokLogo,
+  WhatsappLogo,
+  InstagramLogo,
 } from "@phosphor-icons/react";
 import {
   baseFilename,
@@ -293,6 +297,7 @@ export default function Home() {
               ["#riwayat", "Riwayat"],
               ["#batas", "Batas gratis"],
               ["#faq", "FAQ"],
+              ["#kontak", "Kontak"],
             ].map(([href, label]) => (
               <a
                 key={href}
@@ -343,6 +348,7 @@ export default function Home() {
               ["#riwayat", "Riwayat"],
               ["#batas", "Batas gratis"],
               ["#faq", "FAQ"],
+              ["#kontak", "Kontak"],
             ].map(([href, label]) => (
               <a
                 key={href}
@@ -837,6 +843,50 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Kontak developer: teks kiri, daftar kanal kanan */}
+        <section id="kontak" className="max-w-6xl mx-auto px-4 pb-12 grid gap-6 md:grid-cols-[0.9fr_1.1fr] items-start">
+          <div className="min-w-0">
+            <h2 className="text-2xl font-bold tracking-tight">Nemu bug atau punya ide?</h2>
+            <p className="text-sm opacity-70 mt-2 max-w-[46ch] leading-relaxed">
+              KiraaDown dirawat oleh kiraadityaa. Kirim link yang gagal, tangkapan layar, dan
+              pesan error bila ada. Makin lengkap laporanmu, makin cepat diperbaiki.
+            </p>
+            <p className="mono-num mt-3 text-xs opacity-60">
+              WhatsApp aktif di jam wajar WIB. Kanal lain dibalas saat sempat.
+            </p>
+          </div>
+          <div className="min-w-0 grid gap-2">
+            <ContactRow
+              icon={<GithubLogo size={18} />}
+              label="GitHub"
+              handle="@kiraadityaa"
+              hint="Buka issue untuk bug atau usulan fitur."
+              href="https://github.com/kiraadityaa"
+            />
+            <ContactRow
+              icon={<WhatsappLogo size={18} />}
+              label="WhatsApp"
+              handle="+62 815-5336-2795"
+              hint="Chat langsung untuk bug mendesak."
+              href="https://wa.me/6281553362795?text=Halo%20KiraaDown%2C%20saya%20menemukan%20bug%20di%20aplikasi."
+            />
+            <ContactRow
+              icon={<InstagramLogo size={18} />}
+              label="Instagram"
+              handle="@aaaditz_"
+              hint="DM terbuka untuk saran santai."
+              href="https://instagram.com/aaaditz_"
+            />
+            <ContactRow
+              icon={<TiktokLogo size={18} />}
+              label="TikTok"
+              handle="@kiraadityaa"
+              hint="Komentar atau pesan di akun kreator."
+              href="https://www.tiktok.com/@kiraadityaa"
+            />
+          </div>
+        </section>
+
         {/* FAQ: daftar vertikal, bukan kartu */}
         <section id="faq" className="max-w-6xl mx-auto px-4 pb-14">
           <h2 className="text-2xl font-bold tracking-tight">Pertanyaan umum</h2>
@@ -934,6 +984,42 @@ function Splash({ onDone }: { onDone: () => void }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function ContactRow({
+  icon,
+  label,
+  handle,
+  hint,
+  href,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  handle: string;
+  hint: string;
+  href: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-full rounded-xl border border-black/10 dark:border-white/10 p-3 flex items-center gap-3 hover:border-lime-600/60 transition"
+    >
+      <span className="w-9 h-9 rounded-full bg-lime-500/15 text-lime-700 dark:text-lime-300 grid place-items-center shrink-0">
+        {icon}
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className="block text-sm font-bold">
+          {label} <span className="mono-num font-medium opacity-60">{handle}</span>
+        </span>
+        <span className="block text-xs opacity-60">{hint}</span>
+      </span>
+      <span className="btn-pill px-3.5 py-1.5 text-xs font-bold bg-neutral-900 text-white dark:bg-lime-400 dark:text-lime-950 shrink-0">
+        Hubungi
+      </span>
+    </a>
   );
 }
 
