@@ -360,7 +360,7 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero split: kiri form, kanan panel status */}
         <section id="unduh" className="max-w-6xl mx-auto px-4 pt-10 md:pt-14 pb-8 grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-          <div>
+          <div className="min-w-0">
             <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-lime-700 dark:text-lime-300">
               Downloader TikTok gratis
             </p>
@@ -469,7 +469,7 @@ export default function Home() {
           </div>
 
           {/* Panel kanan: pratinjau cepat atau panduan */}
-          <aside className="dark-card p-5 h-fit lg:sticky lg:top-4">
+          <aside className="dark-card min-w-0 p-5 h-fit lg:sticky lg:top-4">
             {!result ? (
               <div>
                 <p className="font-mono text-[11px] uppercase tracking-[0.16em] opacity-50">
@@ -531,7 +531,7 @@ export default function Home() {
           <section className="max-w-6xl mx-auto px-4 pb-10">
             <div className="dark-card p-4 md:p-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
               {/* Media player */}
-              <div>
+              <div className="min-w-0">
                 {!isImages && (noWm || wm) ? (
                   <div className="rounded-xl overflow-hidden bg-black">
                     <video
@@ -582,7 +582,7 @@ export default function Home() {
               </div>
 
               {/* Opsi unduhan */}
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
                   <CheckCircle size={20} className="text-lime-600" /> Siap diunduh
                 </h2>
@@ -725,14 +725,14 @@ export default function Home() {
         {/* Strip format horizontal, bukan 3 kartu generik */}
         <section className="border-y border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.03]">
           <div className="max-w-6xl mx-auto px-4 py-8 grid gap-6 md:grid-cols-[0.9fr_1.1fr] items-start">
-            <div>
+            <div className="min-w-0">
               <h2 className="text-2xl font-bold tracking-tight">Satu link, semua format.</h2>
               <p className="text-sm opacity-70 mt-2 max-w-[46ch]">
                 Geser daftar format. Semua tombol unduh muncul setelah link berhasil dibaca, jadi
                 kamu tidak perlu menebak.
               </p>
             </div>
-            <div className="no-scrollbar flex gap-2 overflow-x-auto pb-2 snap-x">
+            <div className="no-scrollbar min-w-0 flex gap-2 overflow-x-auto pb-2 snap-x">
               {[
                 { t: "MP4 tanpa watermark", d: "Bersih, siap repost dengan izin." },
                 { t: "MP4 watermark", d: "Cadangan bila versi bersih gagal." },
@@ -755,8 +755,8 @@ export default function Home() {
 
         {/* Riwayat + batas: dua kolom asimetris */}
         <section id="riwayat" className="max-w-6xl mx-auto px-4 py-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <div>
-            <div className="flex items-center justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="text-2xl font-bold tracking-tight">Riwayat perangkat</h2>
               {history.length > 0 && (
                 <button
@@ -764,7 +764,7 @@ export default function Home() {
                     clearHistory();
                     setHistory([]);
                   }}
-                  className="btn-pill px-3.5 py-1.5 text-xs font-semibold border border-black/15 dark:border-white/20 inline-flex items-center gap-1.5"
+                  className="btn-pill shrink-0 px-3.5 py-1.5 text-xs font-semibold border border-black/15 dark:border-white/20 inline-flex items-center gap-1.5"
                 >
                   <Trash size={14} /> Hapus semua
                 </button>
@@ -781,7 +781,7 @@ export default function Home() {
             ) : (
               <ul className="mt-4 grid gap-2">
                 {history.map((h) => (
-                  <li key={h.key} className="dark-card p-3 flex gap-3 items-center">
+                  <li key={h.key} className="dark-card min-w-0 overflow-hidden p-3 flex gap-3 items-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={h.cover || "/favicon.ico"}
@@ -817,7 +817,7 @@ export default function Home() {
             )}
           </div>
 
-          <div id="batas" className="dark-card p-5 h-fit">
+          <div id="batas" className="dark-card min-w-0 p-5 h-fit">
             <h2 className="text-xl font-bold tracking-tight">Batas paket gratis</h2>
             <p className="text-sm opacity-70 mt-1">Jujur soal limit agar tidak kaget.</p>
             <dl className="mt-4 text-sm divide-y divide-black/10 dark:divide-white/10">
@@ -941,7 +941,7 @@ function LimitRow({ k, v }: { k: string; v: string }) {
   return (
     <div className="py-2.5 grid grid-cols-[130px_1fr] gap-3">
       <dt className="font-mono text-xs uppercase tracking-wide opacity-60 pt-0.5">{k}</dt>
-      <dd className="text-[13px] leading-relaxed">{v}</dd>
+      <dd className="min-w-0 break-words text-[13px] leading-relaxed">{v}</dd>
     </div>
   );
 }

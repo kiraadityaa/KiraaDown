@@ -24,6 +24,13 @@ html {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+/* Jaring pengaman: halaman tidak boleh meluber horizontal.
+   `clip` dipakai agar position: sticky header tetap bekerja. */
+html,
+body {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
