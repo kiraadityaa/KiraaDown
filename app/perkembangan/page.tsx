@@ -133,20 +133,24 @@ export default function Perkembangan() {
   return (
     <div className="min-h-[100dvh] flex flex-col">
       <header className="sticky top-0 z-50 backdrop-blur-md bg-[#f2f0e8]/90 dark:bg-[#0d0f0c]/90 border-b border-black/10 dark:border-white/10">
-        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
-          <Link href="/" className="flex items-center gap-2.5" aria-label="KiraaDown ke beranda">
-            <span className="w-9 h-9 rounded-[12px] bg-lime-500 grid place-items-center font-mono font-bold text-lg text-lime-950 -rotate-3">
-              K
-            </span>
-            <span className="font-bold tracking-tight">KiraaDown</span>
-          </Link>
+        <div className="max-w-3xl mx-auto px-4 min-h-16 py-2 flex items-center justify-between gap-3">
           <Link
             href="/"
-            className="btn-pill px-4 py-2 bg-lime-500 hover:bg-lime-400 text-lime-950 text-sm font-bold"
+            className="flex items-center gap-2.5 min-w-0"
+            aria-label="KiraaDown ke beranda"
           >
-            Beranda
+            <span className="w-9 h-9 rounded-[12px] bg-lime-500 grid place-items-center font-mono font-bold text-lg text-lime-950 -rotate-3 shrink-0">
+              K
+            </span>
+            <span className="font-bold tracking-tight truncate">KiraaDown</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/"
+              className="btn-pill px-4 py-2 bg-lime-500 hover:bg-lime-400 text-lime-950 text-sm font-bold whitespace-nowrap"
+            >
+              Beranda
+            </Link>
             <ThemeToggle />
           </div>
         </div>
