@@ -333,6 +333,7 @@ export default function Home() {
               ["#batas", "Batas gratis"],
               ["#faq", "FAQ"],
               ["#kontak", "Kontak"],
+              ["/perkembangan", "Update"],
             ].map(([href, label]) => (
               <a
                 key={href}
@@ -367,35 +368,56 @@ export default function Home() {
               aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
               className="w-10 h-10 grid place-items-center rounded-full border border-black/15 dark:border-white/20"
             >
-              {menuOpen ? <X size={19} /> : <List size={19} />}
+              <span className="relative block h-[19px] w-[19px]" aria-hidden="true">
+                <List
+                  size={19}
+                  className={`absolute inset-0 transition-all duration-200 ${menuOpen ? "opacity-0 rotate-90 scale-75" : "opacity-100 rotate-0 scale-100"}`}
+                />
+                <X
+                  size={19}
+                  className={`absolute inset-0 transition-all duration-200 ${menuOpen ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-75"}`}
+                />
+              </span>
             </button>
           </div>
         </div>
 
-        {/* Panel menu mobile */}
-        {menuOpen && (
-          <nav
-            aria-label="Navigasi seluler"
-            className="md:hidden border-t border-black/10 dark:border-white/10 bg-[#f2f0e8] dark:bg-[#0d0f0c] px-4 py-3 grid gap-1 text-[15px] font-medium"
-          >
-            {[
-              ["#unduh", "Unduh"],
-              ["#riwayat", "Riwayat"],
-              ["#batas", "Batas gratis"],
-              ["#faq", "FAQ"],
-              ["#kontak", "Kontak"],
-            ].map(([href, label]) => (
-              <a
-                key={href}
-                href={href}
-                onClick={() => setMenuOpen(false)}
-                className="px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10"
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
-        )}
+        {/* Panel menu mobile dengan animasi buka tutup */}
+        <nav
+          aria-label="Navigasi seluler"
+          inert={!menuOpen}
+          className={`menu-panel md:hidden grid transition-all duration-300 ease-out ${
+            menuOpen
+              ? "grid-rows-[1fr] opacity-100 border-t border-black/10 dark:border-white/10"
+              : "grid-rows-[0fr] opacity-0 border-t border-transparent"
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="bg-[#f2f0e8] dark:bg-[#0d0f0c] px-4 py-3 grid gap-1 text-[15px] font-medium">
+              {[
+                ["#unduh", "Unduh"],
+                ["#riwayat", "Riwayat"],
+                ["#batas", "Batas gratis"],
+                ["#faq", "FAQ"],
+                ["#kontak", "Kontak"],
+                ["/perkembangan", "Update"],
+              ].map(([href, label], i) => (
+                <a
+                  key={href}
+                  href={href}
+                  onClick={() => setMenuOpen(false)}
+                  tabIndex={menuOpen ? 0 : -1}
+                  style={{ transitionDelay: menuOpen ? `${i * 35}ms` : "0ms" }}
+                  className={`px-3 py-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-all duration-300 ${
+                    menuOpen ? "translate-y-0 opacity-100" : "-translate-y-1 opacity-0"
+                  }`}
+                >
+                  {label}
+                </a>
+              ))}
+            </div>
+          </div>
+        </nav>
       </header>
 
       <main className="flex-1">
