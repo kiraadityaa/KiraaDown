@@ -60,6 +60,7 @@ export default function Home() {
   const [zipBusy, setZipBusy] = useState(false);
   const autoDone = useRef(false);
   const [playing, setPlaying] = useState(false);
+  const [vidRes, setVidRes] = useState("");
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -102,6 +103,7 @@ export default function Home() {
       setNotice("");
       setResult(null);
       setPlaying(false);
+      setVidRes("");
       try {
         const res = await fetch("/api/resolve", {
           method: "POST",
@@ -583,6 +585,10 @@ export default function Home() {
                       className="w-full max-h-[520px]"
                       onPlay={() => setPlaying(true)}
                       onPause={() => setPlaying(false)}
+                      onLoadedMetadata={(e) => {
+                        const v = e.currentTarget;
+                        if (v.videoWidth > 0) setVidRes(`${v.videoWidth} x ${v.videoHeight}`);
+                      }}
                     />
                   </div>
                 ) : isImages && result.images.length > 0 ? (
@@ -613,6 +619,9 @@ export default function Home() {
                   {playing ? <Pause size={15} /> : <Play size={15} />}
                   {playing ? "Jeda pratinjau" : "Putar pratinjau"}
                 </button>
+                <p className="mono-num mt-2 text-xs opacity-60">
+                  Resolusi terkirim: {vidRes || "terdeteksi saat video dimuat"}
+                </p>
                 {warning && (
                   <p className="mt-3 text-xs leading-relaxed rounded-xl bg-amber-500/10 border border-amber-500/30 p-3">
                     {warning}
@@ -945,6 +954,10 @@ export default function Home() {
               {
                 q: "Apakah file saya disimpan?",
                 a: "Tidak. Proxy hanya meneruskan byte dari CDN ke browser kamu lalu dilupakan. Riwayat hanya ada di browser kamu.",
+              },
+              {
+                q: "Apakah video dikompres atau diturunkan kualitasnya?",
+                a: "Tidak oleh KiraaDown. Proxy meneruskan byte persis dari CDN tanpa encode ulang, dan resolusi yang benar-benar terkirim ditampilkan di bawah pratinjau. Batasnya: varian tertinggi tetap ditentukan TikTok dan penyedia gratis, jadi HD berarti varian terbaik yang tersedia, bukan jaminan piksel identik dengan file asli kreator.",
               },
               {
                 q: "Bolehkah mengunduh konten orang lain?",

@@ -19,6 +19,10 @@ Prinsip: **ZERO BUDGET Rp0**. Tidak ada layanan berbayar, tidak ada kartu kredit
 
 Tidak ada API key yang diekspos ke browser. Semua panggilan upstream (TikWM, worker cadangan, oEmbed) dilakukan dari Route Handler server (`/api/resolve`) dengan rantai fallback otomatis.
 
+## Kualitas video
+
+KiraaDown tidak pernah mengompres atau meng-encode ulang. Proxy meneruskan byte persis dari CDN ke browser, dan tombol HD meminta varian tertinggi dari penyedia. Resolusi yang benar-benar terkirim ditampilkan di bawah pratinjau agar bisa diverifikasi. Yang tidak bisa dijamin: varian tertinggi dari penyedia gratis sama piksel dengan file asli kreator, karena batas itu ada di TikTok dan penyedia, bukan di aplikasi ini.
+
 ### Keterbatasan jujur
 
 - Tanpa watermark bergantung pada TikWM. Bila TikWM sibuk atau memblokir, app menampilkan metadata oEmbed plus tombol coba lagi. Tidak ada jalan gratis dan legal yang 100 persen selalu berhasil.
